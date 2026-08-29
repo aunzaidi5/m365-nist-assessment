@@ -1,0 +1,51 @@
+# ==========================================================
+# Local PowerShell dependencies
+# ==========================================================
+.psmodules/
+
+# ==========================================================
+# Assessment output / potentially sensitive tenant evidence
+# ==========================================================
+output/
+M365-Assessment/
+M365-NIST-Assessment-Output/
+
+# M365-Assess generated files
+Assessment_*/
+NIST_*/
+_Assessment-*
+_PermissionDeficits.json
+_Compliance-Matrix*.xlsx
+
+# Generated reports/evidence
+NIST-Assessment.html
+NIST-Findings.csv
+NIST-SP800-53-Findings.csv
+NIST-SP800-53-Family-Summary.csv
+NIST-CSF-2.0-Findings.csv
+NIST-CSF-2.0-Function-Summary.csv
+NIST-Compliance-Matrix.xlsx
+assessment-metadata.json
+
+# ==========================================================
+# Temporary / backup
+# ==========================================================
+*.bak
+*.tmp
+*.log
+.DS_Store
+
+# ==========================================================
+# Editors
+# ==========================================================
+.vscode/
+.idea/
+
+# ==========================================================
+# Future Python web environment
+# ==========================================================
+.venv/
+venv/
+__pycache__/
+*.pyc
+.env

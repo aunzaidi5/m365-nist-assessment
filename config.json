@@ -1,0 +1,16 @@
+{
+  "toolName": "M365-NIST-Assessment",
+  "version": "0.1.0",
+  "m365AssessMinimumVersion": "2.12.0",
+  "frameworks": {
+    "nist80053": "nist-800-53",
+    "nistCsf": "nist-csf"
+  },
+  "defaultSection": [
+    "Identity"
+  ],
+  "reporting": {
+    "formalComplianceClaim": false,
+    "showMappedCheckPassRate": true
+  }
+}
