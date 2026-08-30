@@ -7,8 +7,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
 
@@ -19,11 +21,16 @@ app = FastAPI(
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+TEMPLATES_DIR = PROJECT_ROOT / "web" / "templates"
+STATIC_DIR = PROJECT_ROOT / "web" / "static"
 ASSESSMENT_SCRIPT = PROJECT_ROOT / "Invoke-M365NistAssessment.ps1"
 MODULE_PATH = PROJECT_ROOT / ".psmodules"
 WEB_RUNS = PROJECT_ROOT / "output" / "web-runs"
 
 WEB_RUNS.mkdir(parents=True, exist_ok=True)
+
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 jobs = {}
 
@@ -199,12 +206,11 @@ def run_assessment(job_id: str, tenant_domain: str):
 
 
 @app.get("/")
-def root():
-    return {
-        "application": "M365 NIST Assessment",
-        "status": "running",
-        "version": "0.2.0",
-    }
+def root(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "index.html"
+    )
 
 
 @app.get("/health")
