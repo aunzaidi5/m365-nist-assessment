@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+import time
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -164,9 +165,21 @@ def run_assessment(job_id: str, tenant_domain: str):
             device_match = DEVICE_CODE_PATTERN.search(line)
 
             if device_match:
-                job["verification_url"] = device_match.group(1)
-                job["device_code"] = device_match.group(2)
-                job["status"] = "awaiting_authentication"
+                new_url = device_match.group(1)
+                new_code = device_match.group(2)
+
+                # M365-Assess can emit more than one device code.
+                # Do not expose a code immediately. Keep the newest code
+                # pending until it has remained unchanged for a few seconds.
+                if new_code != job.get("pending_device_code"):
+                    job["pending_verification_url"] = new_url
+                    job["pending_device_code"] = new_code
+                    job["auth_code_updated_at"] = time.monotonic()
+
+                    # Hide any older code from the browser.
+                    job["verification_url"] = None
+                    job["device_code"] = None
+                    job["status"] = "preparing_authentication"
 
             if (
                 "required Graph scopes granted" in line
@@ -301,6 +314,9 @@ def create_assessment(request: AssessmentRequest):
         "completed_at": None,
         "verification_url": None,
         "device_code": None,
+        "pending_verification_url": None,
+        "pending_device_code": None,
+        "auth_code_updated_at": None,
         "output_folder": str(output_folder),
         "artifacts": {},
         "logs": [],
@@ -331,6 +347,21 @@ def assessment_status(job_id: str):
             status_code=404,
             detail="Assessment not found.",
         )
+
+    # Only expose the newest device code after it has remained
+    # unchanged for fifteen seconds. This prevents the browser from showing
+    # an initial code that M365-Assess immediately replaces.
+    if (
+        job["status"] == "preparing_authentication"
+        and job.get("pending_device_code")
+        and job.get("auth_code_updated_at") is not None
+    ):
+        age = time.monotonic() - job["auth_code_updated_at"]
+
+        if age >= 15:
+            job["verification_url"] = job["pending_verification_url"]
+            job["device_code"] = job["pending_device_code"]
+            job["status"] = "awaiting_authentication"
 
     response = {
         "assessment_id": job["id"],

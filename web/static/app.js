@@ -179,7 +179,8 @@ function handleAssessmentStatus(data) {
 
     if (
         data.status === "queued" ||
-        data.status === "starting"
+        data.status === "starting" ||
+        data.status === "preparing_authentication"
     ) {
         showStep(startingStep);
         schedulePoll();
