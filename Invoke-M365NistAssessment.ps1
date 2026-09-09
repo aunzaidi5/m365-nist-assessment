@@ -26,7 +26,7 @@ param(
     [Parameter()]
     [ValidateSet('Tenant','Identity','Licensing','Email','Intune','Security','Collaboration',
                  'PowerBI','Hybrid','Inventory','ActiveDirectory','SOC2','ValueOpportunity','All')]
-    [string[]]$Section = @('Identity'),
+    [string[]]$Section,
 
     [Parameter()]
     [string]$OutputFolder = '.\M365-NIST-Assessment-Output',
@@ -150,8 +150,11 @@ else {
 
     $invokeParams = @{
         TenantId     = $TenantId
-        Section      = $Section
         OutputFolder = $rawRoot
+    }
+
+    if ($Section -and $Section.Count -gt 0) {
+        $invokeParams.Section = $Section
     }
 
     if ($UseDeviceCode) {

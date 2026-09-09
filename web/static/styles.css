@@ -715,3 +715,392 @@ input:focus {
         grid-column: auto;
     }
 }
+
+
+/* Interactive report preview */
+
+.report-experience {
+    padding: 110px 0;
+    background: var(--white);
+}
+
+.report-preview-grid {
+    margin-top: 46px;
+    display: grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap: 22px;
+    align-items: stretch;
+}
+
+.report-preview-score,
+.report-preview-features {
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: #fff;
+}
+
+.report-preview-score {
+    padding: 34px;
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    gap: 34px;
+    align-items: center;
+}
+
+.preview-score-wheel {
+    width: 176px;
+    height: 176px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background:
+        conic-gradient(
+            var(--blue) 0 72%,
+            #e8eef7 72% 100%
+        );
+    box-shadow: inset 0 0 0 1px rgba(17,103,216,.06);
+}
+
+.preview-score-inner {
+    width: 132px;
+    height: 132px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    box-shadow: 0 8px 30px rgba(7,29,62,.08);
+}
+
+.preview-score-inner strong {
+    font-size: 31px;
+    letter-spacing: -.04em;
+    color: var(--deep-blue);
+}
+
+.preview-score-inner span {
+    margin-top: 4px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+}
+
+.preview-kicker {
+    margin-bottom: 10px;
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.report-preview-score h3 {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.15;
+    letter-spacing: -.03em;
+}
+
+.report-preview-score p,
+.preview-feature p {
+    color: var(--muted);
+    line-height: 1.65;
+    font-size: 14px;
+}
+
+.report-preview-features {
+    overflow: hidden;
+}
+
+.preview-feature {
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    gap: 16px;
+    padding: 25px 28px;
+}
+
+.preview-feature + .preview-feature {
+    border-top: 1px solid var(--border);
+}
+
+.preview-feature > span {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: #edf5ff;
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.preview-feature strong {
+    font-size: 16px;
+}
+
+.preview-feature p {
+    margin: 7px 0 0;
+}
+
+@media (max-width: 850px) {
+    .report-preview-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .report-preview-score {
+        grid-template-columns: 1fr;
+    }
+
+    .preview-score-wheel {
+        width: 150px;
+        height: 150px;
+    }
+
+    .preview-score-inner {
+        width: 112px;
+        height: 112px;
+    }
+}
+
+/* ============================
+   Interactive Report Preview
+   ============================ */
+
+.report-experience {
+    padding: 110px 0;
+    background: #ffffff;
+}
+
+.report-preview-grid {
+    margin-top: 46px;
+
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+
+    gap: 22px;
+    align-items: stretch;
+}
+
+
+/* Left score card + right feature card */
+
+.report-preview-score,
+.report-preview-features {
+    background: #ffffff;
+
+    border: 1px solid var(--border);
+    border-radius: 18px;
+
+    box-shadow:
+        0 8px 28px rgba(7, 29, 62, 0.05);
+}
+
+
+/* Score card */
+
+.report-preview-score {
+    padding: 34px;
+
+    display: grid;
+    grid-template-columns: 190px 1fr;
+
+    gap: 34px;
+    align-items: center;
+}
+
+
+/* Fake preview wheel */
+
+.preview-score-wheel {
+    width: 176px;
+    height: 176px;
+
+    border-radius: 50%;
+
+    display: grid;
+    place-items: center;
+
+    background:
+        conic-gradient(
+            var(--blue) 0 72%,
+            #e8eef7 72% 100%
+        );
+}
+
+
+.preview-score-inner {
+    width: 132px;
+    height: 132px;
+
+    border-radius: 50%;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    background: white;
+
+    box-shadow:
+        0 8px 30px rgba(7, 29, 62, 0.08);
+}
+
+
+.preview-score-inner strong {
+    font-size: 31px;
+    line-height: 1;
+
+    letter-spacing: -0.04em;
+
+    color: var(--deep-blue);
+}
+
+
+.preview-score-inner span {
+    margin-top: 6px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+
+    color: var(--muted);
+}
+
+
+/* Score description */
+
+.preview-kicker {
+    margin-bottom: 10px;
+
+    color: var(--blue);
+
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+
+.report-preview-score h3 {
+    margin: 0;
+
+    font-size: 28px;
+    line-height: 1.15;
+
+    letter-spacing: -0.03em;
+}
+
+
+.report-preview-score p {
+    margin: 14px 0 0;
+
+    color: var(--muted);
+
+    font-size: 14px;
+    line-height: 1.65;
+}
+
+
+/* Right feature card */
+
+.report-preview-features {
+    overflow: hidden;
+}
+
+
+.preview-feature {
+    display: grid;
+
+    grid-template-columns: 42px 1fr;
+
+    gap: 16px;
+
+    padding: 25px 28px;
+
+    align-items: start;
+}
+
+
+.preview-feature + .preview-feature {
+    border-top: 1px solid var(--border);
+}
+
+
+.preview-feature > span {
+    width: 34px;
+    height: 34px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 9px;
+
+    background: #edf5ff;
+
+    color: var(--blue);
+
+    font-size: 11px;
+    font-weight: 800;
+}
+
+
+.preview-feature strong {
+    display: block;
+
+    color: var(--text);
+
+    font-size: 16px;
+}
+
+
+.preview-feature p {
+    margin: 7px 0 0;
+
+    color: var(--muted);
+
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+
+/* Responsive */
+
+@media (max-width: 850px) {
+
+    .report-preview-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .report-experience {
+        padding: 75px 0;
+    }
+
+    .report-preview-score {
+        grid-template-columns: 1fr;
+    }
+
+    .preview-score-wheel {
+        width: 150px;
+        height: 150px;
+    }
+
+    .preview-score-inner {
+        width: 112px;
+        height: 112px;
+    }
+
+}

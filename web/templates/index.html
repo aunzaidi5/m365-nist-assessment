@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M365 NIST Identity Assessment</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <title>Microsoft 365 NIST-Aligned Security Assessment</title>
+    <link rel="stylesheet" href="/static/styles.css?v=3">
 </head>
 
 <body>
@@ -21,7 +21,7 @@
         </div>
 
         <div class="framework-label">
-            NIST Identity Assessment
+           Microsoft 365 NIST-Aligned Security Assessment
         </div>
     </div>
 </header>
@@ -37,16 +37,16 @@
     <div class="container hero-content">
 
         <div class="eyebrow">
-            MICROSOFT 365 · IDENTITY SECURITY
+            MICROSOFT 365 · NIST-ALIGNED SECURITY ASSESSMENT
         </div>
 
         <h1>
             Measure your Microsoft 365
-            <span>identity posture against NIST.</span>
+            <span>posture against NIST.</span>
         </h1>
 
         <p class="hero-copy">
-            Run an automated Entra ID identity assessment and map
+            Run a full Microsoft 365 security assessment and map
             technical findings against NIST SP 800-53 Rev. 5 and
             NIST Cybersecurity Framework 2.0.
         </p>
@@ -54,7 +54,7 @@
         <div class="framework-pills">
             <span>NIST SP 800-53 Rev. 5</span>
             <span>NIST CSF 2.0</span>
-            <span>Microsoft Entra ID</span>
+            <span>Full Microsoft 365 Scope</span>
         </div>
 
         <div class="hero-actions">
@@ -97,8 +97,9 @@
                 <div class="step-number">02</div>
                 <h3>Assess</h3>
                 <p>
-                    Identity configuration and Conditional Access
-                    controls are evaluated through the assessment engine.
+                    Microsoft 365 configuration across identity, email, devices,
+                    security, collaboration, licensing, Power BI and hybrid
+                    services is evaluated through the assessment engine.
                 </p>
             </div>
 
@@ -122,6 +123,63 @@
 
         </div>
 
+    </div>
+</section>
+
+
+<section class="report-experience">
+    <div class="container">
+        <div class="section-heading">
+            <span>INTERACTIVE REPORT</span>
+            <h2>See posture first. Drill into evidence second.</h2>
+        </div>
+
+        <div class="report-preview-grid">
+            <div class="report-preview-score">
+                <div class="preview-score-wheel" aria-label="Illustrative posture score">
+                    <div class="preview-score-inner">
+                        <strong>Live</strong>
+                        <span>NIST posture</span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="preview-kicker">Generated from assessment results</div>
+                    <h3>One posture view, backed by technical evidence.</h3>
+                    <p>
+                        The generated report includes an overall posture wheel,
+                        status and risk filters, search, NIST mappings and
+                        expandable remediation evidence.
+                    </p>
+                </div>
+            </div>
+
+            <div class="report-preview-features">
+                <div class="preview-feature">
+                    <span>01</span>
+                    <div>
+                        <strong>Posture score</strong>
+                        <p>Visualize the mapped-check pass rate without presenting it as a NIST compliance percentage.</p>
+                    </div>
+                </div>
+
+                <div class="preview-feature">
+                    <span>02</span>
+                    <div>
+                        <strong>Filter findings</strong>
+                        <p>Jump directly to failed, warning, review or passed controls and narrow by risk.</p>
+                    </div>
+                </div>
+
+                <div class="preview-feature">
+                    <span>03</span>
+                    <div>
+                        <strong>Expand evidence</strong>
+                        <p>Open a finding to inspect NIST mappings, observed state, expected state and remediation.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -158,7 +216,7 @@
                 START ASSESSMENT
             </div>
 
-            <h2>Test your identity posture.</h2>
+            <h2>Test your Microsoft 365 posture.</h2>
 
             <p>
                 Enter the primary Microsoft 365 tenant domain
@@ -207,8 +265,8 @@
             <h2>Starting the assessment engine.</h2>
 
             <p>
-                Preparing Microsoft Graph authentication and
-                the Identity assessment session.
+                Preparing Microsoft authentication and
+                the full Microsoft 365 assessment session.
             </p>
 
         </div>
@@ -264,7 +322,7 @@
                 ASSESSMENT RUNNING
             </div>
 
-            <h2>Evaluating identity posture.</h2>
+            <h2>Evaluating Microsoft 365 posture.</h2>
 
             <p id="runningTenant"></p>
 
@@ -272,17 +330,17 @@
 
                 <div class="progress-item active">
                     <span></span>
-                    Microsoft Graph connected
+                    Microsoft authentication connected
                 </div>
 
                 <div class="progress-item active">
                     <span></span>
-                    Collecting Entra ID evidence
+                    Collecting Microsoft 365 evidence
                 </div>
 
                 <div class="progress-item">
                     <span></span>
-                    Evaluating identity controls
+                    Evaluating Microsoft 365 controls
                 </div>
 
                 <div class="progress-item">
@@ -298,8 +356,8 @@
             </div>
 
             <div class="assessment-note">
-                The assessment can take a few minutes depending
-                on tenant size and available Microsoft Graph data.
+                The full assessment can take longer depending on tenant size,
+                enabled Microsoft 365 services and available permissions.
             </div>
 
         </div>
@@ -401,7 +459,7 @@
 </div>
 
 
-<script src="/static/app.js"></script>
+<script src="/static/app.js?v=20260909-4"></script>
 
 </body>
 </html>
