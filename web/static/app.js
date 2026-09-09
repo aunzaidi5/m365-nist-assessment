@@ -38,6 +38,34 @@ let pollTimer = null;
 let currentTenant = null;
 
 
+const progressItems = Array.from(
+    document.querySelectorAll("#runningStep .progress-item")
+);
+
+const PROGRESS_PHASES = {
+    authentication: 1,
+    collecting: 2,
+    evaluating: 3,
+    mapping: 4,
+    building: 5,
+    completed: 5
+};
+
+
+function setProgressPhase(phase) {
+    const activeCount = PROGRESS_PHASES[phase] || 0;
+
+    progressItems.forEach((item, index) => {
+        item.classList.toggle("active", index < activeCount);
+    });
+}
+
+
+function resetProgress() {
+    setProgressPhase("authentication");
+}
+
+
 function showStep(step) {
     [
         tenantStep,
@@ -84,6 +112,7 @@ function resetAssessment() {
 
     tenantInput.value = "";
     tenantError.textContent = "";
+    resetProgress();
 
     showStep(tenantStep);
 }
@@ -201,52 +230,75 @@ function handleAssessmentStatus(data) {
     }
 
 
-    if (data.status === "running") {
+if (data.status === "running") {
 
-        runningTenant.textContent =
-            `Tenant: ${data.tenant_domain}`;
+    runningTenant.textContent =
+        `Tenant: ${data.tenant_domain}`;
 
-        showStep(runningStep);
-        schedulePoll();
-        return;
-    }
+    setProgressPhase(
+        data.phase || "evaluating"
+    );
 
+    showStep(runningStep);
+    schedulePoll();
+    return;
+}
 
-    if (data.status === "completed") {
+if (data.status === "completed") {
 
-        clearTimeout(pollTimer);
+    clearTimeout(pollTimer);
 
-        completedTenant.textContent =
-            `Tenant: ${data.tenant_domain}`;
+    completedTenant.textContent =
+        `Tenant: ${data.tenant_domain}`;
 
-        const absoluteReport =
-            `${window.location.origin}${data.report_url}`;
+    const absoluteReport =
+        `${window.location.origin}${data.report_url}`;
 
-        reportLink.href = data.report_url;
-        reportUrl.textContent = absoluteReport;
+    reportLink.href = data.report_url;
+    reportUrl.textContent = absoluteReport;
 
-        outputFolder.textContent =
-            data.output_folder || "Not available";
+    outputFolder.textContent =
+        data.output_folder || "Not available";
 
-        setDownloadLink(
-            excelLink,
-            data.downloads?.excel
-        );
+    setDownloadLink(
+        excelLink,
+        data.downloads?.excel
+    );
 
-        setDownloadLink(
-            spLink,
-            data.downloads?.sp80053_csv
-        );
+    setDownloadLink(
+        spLink,
+        data.downloads?.sp80053_csv
+    );
 
-        setDownloadLink(
-            csfLink,
-            data.downloads?.csf_csv
-        );
+    setDownloadLink(
+        csfLink,
+        data.downloads?.csf_csv
+    );
 
+    // Keep the progress screen visible while we visibly
+    // confirm the remaining completed stages.
+    showStep(runningStep);
+
+    setProgressPhase("evaluating");
+
+    setTimeout(() => {
+        setProgressPhase("mapping");
+    }, 650);
+
+    setTimeout(() => {
+        setProgressPhase("building");
+    }, 1300);
+
+    setTimeout(() => {
+        setProgressPhase("completed");
+    }, 1950);
+
+    setTimeout(() => {
         showStep(completeStep);
-        return;
-    }
+    }, 2700);
 
+    return;
+}
 
     if (data.status === "failed") {
         showFailure(

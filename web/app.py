@@ -1,4 +1,5 @@
 import os
+import json
 import re
 import subprocess
 import time
@@ -117,6 +118,721 @@ def locate_artifacts(output_folder: Path):
     return artifacts
 
 
+
+INTERACTIVE_REPORT_MARKER = "m365-nist-interactive-v1"
+
+
+def get_sections_run(output_folder: Path):
+    """Read the actual M365-Assess scope from assessment provenance."""
+    candidates = list(output_folder.rglob("_Assessment-Provenance.json"))
+
+    if not candidates:
+        return []
+
+    provenance = max(candidates, key=lambda p: p.stat().st_mtime)
+
+    try:
+        data = json.loads(provenance.read_text(encoding="utf-8-sig"))
+    except Exception:
+        return []
+
+    sections = data.get("sectionsRun") or []
+
+    if isinstance(sections, str):
+        sections = [sections]
+
+    return [str(section).strip() for section in sections if str(section).strip()]
+
+
+def enhance_nist_report(report_path: Path, sections_run=None):
+    """
+    Post-process the generated NIST report so every new web assessment gets
+    the interactive dashboard automatically. This keeps the PowerShell
+    generator untouched and enhances the final self-contained HTML artifact.
+    """
+    if not report_path.exists():
+        return
+
+    text = report_path.read_text(encoding="utf-8", errors="replace")
+
+    # Keep the displayed scope aligned with the actual M365-Assess provenance.
+    if sections_run:
+        friendly_sections = []
+        for section in sections_run:
+            friendly_sections.append("Power BI" if section == "PowerBI" else section)
+
+        scope_text = " · ".join(friendly_sections)
+
+        text = re.sub(
+            r"(<strong>\s*Scope:\s*</strong>\s*)([^<\r\n]+)",
+            lambda match: match.group(1) + scope_text + " &nbsp; | &nbsp; ",
+            text,
+            count=1,
+            flags=re.IGNORECASE,
+        )
+
+    # Do not inject the interactive assets twice.
+    if INTERACTIVE_REPORT_MARKER in text:
+        report_path.write_text(text, encoding="utf-8")
+        return
+
+    interactive_css = r"""
+<style id="m365-nist-interactive-v1">
+/* Interactive dashboard injected by the FastAPI web layer */
+.nist-dashboard {
+    display: grid;
+    grid-template-columns: minmax(300px, 390px) 1fr;
+    gap: 18px;
+    margin: 22px 0;
+}
+
+.nist-score-panel {
+    background: #fff;
+    border: 1px solid #e4e7ec;
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.nist-score-wheel {
+    --score: 0;
+    width: 168px;
+    height: 168px;
+    min-width: 168px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: conic-gradient(
+        #1570ef calc(var(--score) * 1%),
+        #e9eef5 0
+    );
+    box-shadow: inset 0 0 0 1px rgba(21,112,239,.06);
+}
+
+.nist-score-inner {
+    width: 126px;
+    height: 126px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    box-shadow: 0 8px 24px rgba(16,24,40,.08);
+}
+
+.nist-score-inner strong {
+    font-size: 31px;
+    line-height: 1;
+    letter-spacing: -.04em;
+    color: #101828;
+}
+
+.nist-score-inner span {
+    margin-top: 7px;
+    color: #667085;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.nist-score-copy h2 {
+    margin: 0 0 8px;
+    font-size: 20px;
+}
+
+.nist-score-copy p {
+    margin: 0;
+    color: #667085;
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.nist-score-help {
+    margin-top: 13px;
+    border: 0;
+    background: #eff8ff;
+    color: #175cd3;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.nist-score-breakdown {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 9px;
+    background: #f8fafc;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #344054;
+}
+
+.nist-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(110px, 1fr));
+    gap: 12px;
+}
+
+.nist-metric {
+    background: #fff;
+    border: 1px solid #e4e7ec;
+    border-radius: 14px;
+    padding: 17px;
+}
+
+.nist-metric-label {
+    color: #667085;
+    font-size: 12px;
+}
+
+.nist-metric-value {
+    margin-top: 5px;
+    font-size: 25px;
+    font-weight: 760;
+    color: #101828;
+}
+
+.nist-metric.pass .nist-metric-value { color: #067647; }
+.nist-metric.fail .nist-metric-value { color: #b42318; }
+.nist-metric.warning .nist-metric-value { color: #b54708; }
+.nist-metric.review .nist-metric-value { color: #175cd3; }
+
+.nist-findings-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 9px;
+    align-items: center;
+    margin: 14px 0 16px;
+}
+
+.nist-filter-chip {
+    border: 1px solid #d0d5dd;
+    background: #fff;
+    color: #344054;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.nist-filter-chip.active {
+    color: #fff;
+    background: #175cd3;
+    border-color: #175cd3;
+}
+
+.nist-findings-search,
+.nist-risk-filter {
+    border: 1px solid #d0d5dd;
+    background: #fff;
+    color: #101828;
+    border-radius: 9px;
+    padding: 9px 11px;
+    font: inherit;
+    font-size: 12px;
+    min-height: 36px;
+}
+
+.nist-findings-search {
+    flex: 1;
+    min-width: 240px;
+}
+
+.nist-visible-count {
+    margin-left: auto;
+    color: #667085;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+#nistInteractiveFindings th:nth-child(n+5),
+#nistInteractiveFindings td:nth-child(n+5) {
+    display: none;
+}
+
+#nistInteractiveFindings tbody tr.nist-finding-row {
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+#nistInteractiveFindings tbody tr.nist-finding-row:hover {
+    background: #f8fbff;
+}
+
+#nistInteractiveFindings tbody tr.nist-finding-row td:nth-child(2)::after {
+    content: "  ▾";
+    color: #98a2b3;
+    font-size: 11px;
+}
+
+#nistInteractiveFindings tbody tr.nist-finding-row.expanded td:nth-child(2)::after {
+    content: "  ▴";
+}
+
+#nistInteractiveFindings tr.nist-detail-row td {
+    display: table-cell !important;
+    padding: 0;
+    background: #fbfcfe;
+}
+
+.nist-detail-grid {
+    padding: 18px 20px 20px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 13px;
+}
+
+.nist-detail-block {
+    border: 1px solid #e4e7ec;
+    background: #fff;
+    border-radius: 10px;
+    padding: 13px;
+}
+
+.nist-detail-block.full {
+    grid-column: 1 / -1;
+}
+
+.nist-detail-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #667085;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.nist-detail-value {
+    font-size: 12px;
+    line-height: 1.6;
+    color: #344054;
+    overflow-wrap: anywhere;
+}
+
+.nist-empty {
+    color: #98a2b3;
+    font-style: italic;
+}
+
+@media (max-width: 900px) {
+    .nist-dashboard { grid-template-columns: 1fr; }
+    .nist-metrics { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+    .nist-score-panel {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .nist-score-wheel {
+        width: 150px;
+        height: 150px;
+        min-width: 150px;
+    }
+
+    .nist-score-inner {
+        width: 112px;
+        height: 112px;
+    }
+
+    .nist-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nist-detail-block.full {
+        grid-column: auto;
+    }
+}
+</style>
+"""
+
+    interactive_js = r"""
+<script id="m365-nist-interactive-script">
+document.addEventListener("DOMContentLoaded", () => {
+    const normalize = value => (value || "").trim();
+    const lower = value => normalize(value).toLowerCase();
+    const esc = value => normalize(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+
+    /* ---------------- Dashboard / score wheel ---------------- */
+    const cards = document.querySelector(".cards");
+
+    if (cards && !document.getElementById("nistInteractiveDashboard")) {
+        const values = {};
+
+        cards.querySelectorAll(".card").forEach(card => {
+            const label = normalize(card.querySelector(".label")?.textContent);
+            const value = normalize(card.querySelector(".value")?.textContent);
+
+            if (label) values[label] = value;
+        });
+
+        const rawScore =
+            values["Mapped-check pass rate*"] ||
+            values["Mapped-check pass rate"] ||
+            "0%";
+
+        const score = Math.max(
+            0,
+            Math.min(100, Number.parseFloat(rawScore) || 0)
+        );
+
+        const pass = values["Pass"] || "0";
+        const fail = values["Fail"] || "0";
+        const warning = values["Warning"] || "0";
+        const review = values["Review"] || "0";
+        const mapped = values["NIST-mapped findings"] || "0";
+        const sp = values["Mapped to SP 800-53"] || "0";
+        const csf = values["Mapped to CSF 2.0"] || "0";
+
+        const dashboard = document.createElement("div");
+        dashboard.id = "nistInteractiveDashboard";
+        dashboard.className = "nist-dashboard";
+        dashboard.innerHTML = `
+            <div class="nist-score-panel">
+                <div class="nist-score-wheel" id="nistOverallScoreWheel">
+                    <div class="nist-score-inner">
+                        <strong>${score.toFixed(1).replace(".0","")}%</strong>
+                        <span>Mapped-check pass rate</span>
+                    </div>
+                </div>
+
+                <div class="nist-score-copy">
+                    <h2>Overall NIST posture view</h2>
+                    <p>
+                        Pass rate across applicable mapped technical checks.
+                        This is a posture indicator, not a NIST compliance percentage.
+                    </p>
+
+                    <button class="nist-score-help" id="nistScoreHelp" type="button">
+                        How is this calculated?
+                    </button>
+
+                    <div class="nist-score-breakdown" id="nistScoreBreakdown" hidden>
+                        <strong>${pass}</strong> passed across the scored
+                        Pass + Fail + Warning population. Review, Unknown and
+                        Not Licensed states remain visible but are excluded from
+                        the mapped-check pass-rate denominator.
+                    </div>
+                </div>
+            </div>
+
+            <div class="nist-metrics">
+                <div class="nist-metric">
+                    <div class="nist-metric-label">NIST-mapped findings</div>
+                    <div class="nist-metric-value">${mapped}</div>
+                </div>
+
+                <div class="nist-metric pass">
+                    <div class="nist-metric-label">Pass</div>
+                    <div class="nist-metric-value">${pass}</div>
+                </div>
+
+                <div class="nist-metric fail">
+                    <div class="nist-metric-label">Fail</div>
+                    <div class="nist-metric-value">${fail}</div>
+                </div>
+
+                <div class="nist-metric warning">
+                    <div class="nist-metric-label">Warning</div>
+                    <div class="nist-metric-value">${warning}</div>
+                </div>
+
+                <div class="nist-metric review">
+                    <div class="nist-metric-label">Review</div>
+                    <div class="nist-metric-value">${review}</div>
+                </div>
+
+                <div class="nist-metric">
+                    <div class="nist-metric-label">Mapped to SP 800-53</div>
+                    <div class="nist-metric-value">${sp}</div>
+                </div>
+
+                <div class="nist-metric">
+                    <div class="nist-metric-label">Mapped to CSF 2.0</div>
+                    <div class="nist-metric-value">${csf}</div>
+                </div>
+            </div>
+        `;
+
+        cards.replaceWith(dashboard);
+
+        const wheel = document.getElementById("nistOverallScoreWheel");
+        requestAnimationFrame(() => {
+            wheel?.style.setProperty("--score", String(score));
+        });
+
+        const scoreHelp = document.getElementById("nistScoreHelp");
+        const breakdown = document.getElementById("nistScoreBreakdown");
+
+        scoreHelp?.addEventListener("click", () => {
+            breakdown.hidden = !breakdown.hidden;
+            scoreHelp.textContent = breakdown.hidden
+                ? "How is this calculated?"
+                : "Hide calculation";
+        });
+    }
+
+    /* ---------------- Detailed findings ---------------- */
+    const detailedSection = Array.from(document.querySelectorAll("section"))
+        .find(section =>
+            lower(section.querySelector("h2")?.textContent)
+                .includes("detailed nist findings")
+        );
+
+    const table = detailedSection?.querySelector("table");
+
+    if (!table || !table.tBodies.length) return;
+
+    table.id = "nistInteractiveFindings";
+
+    const toolbar = document.createElement("div");
+    toolbar.className = "nist-findings-toolbar";
+    toolbar.innerHTML = `
+        <button class="nist-filter-chip active" type="button" data-status="all">All</button>
+        <button class="nist-filter-chip" type="button" data-status="fail">Fail</button>
+        <button class="nist-filter-chip" type="button" data-status="warning">Warning</button>
+        <button class="nist-filter-chip" type="button" data-status="review">Review</button>
+        <button class="nist-filter-chip" type="button" data-status="pass">Pass</button>
+
+        <select class="nist-risk-filter" id="nistRiskFilter">
+            <option value="all">All risk levels</option>
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+            <option value="info">Info</option>
+        </select>
+
+        <input
+            class="nist-findings-search"
+            id="nistFindingsSearch"
+            type="search"
+            placeholder="Search check ID, setting, NIST control or remediation..."
+        />
+
+        <span class="nist-visible-count" id="nistVisibleCount"></span>
+    `;
+
+    const hint = document.createElement("p");
+    hint.className = "small";
+    hint.textContent =
+        "Click a finding to expand its NIST mappings, observed state, expected state and remediation.";
+
+    table.parentElement?.before(toolbar, hint);
+
+    const rows = [];
+
+    Array.from(table.tBodies[0].rows).forEach(row => {
+        const cells = Array.from(row.cells);
+
+        if (cells.length < 9) return;
+
+        const status = lower(row.querySelector(".status")?.textContent) || "other";
+        const risk = lower(cells[3].textContent) || "unknown";
+        const searchText = lower(cells.map(cell => cell.textContent).join(" "));
+
+        row.classList.add("nist-finding-row");
+        row.dataset.status = status;
+        row.dataset.risk = risk;
+        row.dataset.search = searchText;
+
+        const values = {
+            sp: normalize(cells[4].textContent),
+            csf: normalize(cells[5].textContent),
+            observed: normalize(cells[6].textContent),
+            expected: normalize(cells[7].textContent),
+            remediation: normalize(cells[8].textContent)
+        };
+
+        const display = value =>
+            value
+                ? esc(value)
+                : '<span class="nist-empty">Not provided by the source check.</span>';
+
+        const detail = document.createElement("tr");
+        detail.className = "nist-detail-row";
+        detail.hidden = true;
+
+        const detailCell = document.createElement("td");
+        detailCell.colSpan = cells.length;
+        detailCell.innerHTML = `
+            <div class="nist-detail-grid">
+                <div class="nist-detail-block">
+                    <span class="nist-detail-label">NIST SP 800-53 Rev. 5</span>
+                    <div class="nist-detail-value">${display(values.sp)}</div>
+                </div>
+
+                <div class="nist-detail-block">
+                    <span class="nist-detail-label">NIST CSF 2.0</span>
+                    <div class="nist-detail-value">${display(values.csf)}</div>
+                </div>
+
+                <div class="nist-detail-block">
+                    <span class="nist-detail-label">Observed</span>
+                    <div class="nist-detail-value">${display(values.observed)}</div>
+                </div>
+
+                <div class="nist-detail-block">
+                    <span class="nist-detail-label">Expected</span>
+                    <div class="nist-detail-value">${display(values.expected)}</div>
+                </div>
+
+                <div class="nist-detail-block full">
+                    <span class="nist-detail-label">Remediation</span>
+                    <div class="nist-detail-value">${display(values.remediation)}</div>
+                </div>
+            </div>
+        `;
+
+        detail.appendChild(detailCell);
+        row.after(detail);
+
+        row.addEventListener("click", event => {
+            if (event.target.closest("a,button,input,select")) return;
+
+            const opening = detail.hidden;
+            detail.hidden = !opening;
+            row.classList.toggle("expanded", opening);
+        });
+
+        rows.push({ row, detail });
+    });
+
+    const chips = Array.from(
+        detailedSection.querySelectorAll(".nist-filter-chip")
+    );
+    const search = document.getElementById("nistFindingsSearch");
+    const riskFilter = document.getElementById("nistRiskFilter");
+    const visibleCount = document.getElementById("nistVisibleCount");
+
+    let activeStatus = "all";
+
+    function applyFilters() {
+        const query = lower(search?.value);
+        const risk = riskFilter?.value || "all";
+        let visible = 0;
+
+        rows.forEach(({ row, detail }) => {
+            const statusMatch =
+                activeStatus === "all" ||
+                row.dataset.status === activeStatus;
+
+            const riskMatch =
+                risk === "all" ||
+                row.dataset.risk === risk;
+
+            const textMatch =
+                !query ||
+                row.dataset.search.includes(query);
+
+            const show = statusMatch && riskMatch && textMatch;
+
+            row.hidden = !show;
+
+            if (!show) {
+                detail.hidden = true;
+                row.classList.remove("expanded");
+            }
+
+            if (show) visible += 1;
+        });
+
+        if (visibleCount) {
+            visibleCount.textContent =
+                `${visible} finding${visible === 1 ? "" : "s"} shown`;
+        }
+    }
+
+    chips.forEach(chip => {
+        chip.addEventListener("click", () => {
+            activeStatus = chip.dataset.status || "all";
+
+            chips.forEach(item => {
+                item.classList.toggle("active", item === chip);
+            });
+
+            applyFilters();
+        });
+    });
+
+    search?.addEventListener("input", applyFilters);
+    riskFilter?.addEventListener("change", applyFilters);
+
+    applyFilters();
+});
+</script>
+"""
+
+    if "</head>" in text:
+        text = text.replace("</head>", interactive_css + "\n</head>", 1)
+    else:
+        text = interactive_css + "\n" + text
+
+    if "</body>" in text:
+        text = text.replace("</body>", interactive_js + "\n</body>", 1)
+    else:
+        text += "\n" + interactive_js
+
+    report_path.write_text(text, encoding="utf-8")
+
+
+def update_job_phase_from_log(job, line: str):
+    """Best-effort progress phase based on real assessment output."""
+    value = line.lower()
+
+    if any(token in value for token in (
+        "building assessment package",
+        "generating nist",
+        "nist-assessment.html",
+        "writing report",
+        "exporting report",
+        "report generated",
+    )):
+        job["phase"] = "building"
+        return
+
+    if "nist" in value and any(token in value for token in (
+        "map",
+        "mapping",
+        "compliance matrix",
+        "sp 800-53",
+        "csf",
+    )):
+        job["phase"] = "mapping"
+        return
+
+    if any(token in value for token in (
+        "evaluating",
+        "evaluation",
+        "security checks:",
+        "checks complete",
+        "assessment checks",
+    )):
+        job["phase"] = "evaluating"
+        return
+
+    if any(token in value for token in (
+        "collecting",
+        "collector",
+        "required graph scopes granted",
+        "user summary",
+    )):
+        job["phase"] = "collecting"
+
+
 def run_assessment(job_id: str, tenant_domain: str):
     job = jobs[job_id]
     output_folder = Path(job["output_folder"])
@@ -128,14 +844,13 @@ def run_assessment(job_id: str, tenant_domain: str):
         str(ASSESSMENT_SCRIPT),
         "-TenantId",
         tenant_domain,
-        "-Section",
-        "Identity",
         "-UseDeviceCode",
         "-OutputFolder",
         str(output_folder),
     ]
 
     job["status"] = "starting"
+    job["phase"] = "starting"
     job["started_at"] = utc_now()
 
     try:
@@ -162,6 +877,8 @@ def run_assessment(job_id: str, tenant_domain: str):
             job["logs"].append(line)
             job["logs"] = job["logs"][-100:]
 
+            update_job_phase_from_log(job, line)
+
             device_match = DEVICE_CODE_PATTERN.search(line)
 
             if device_match:
@@ -180,6 +897,7 @@ def run_assessment(job_id: str, tenant_domain: str):
                     job["verification_url"] = None
                     job["device_code"] = None
                     job["status"] = "preparing_authentication"
+                    job["phase"] = "authentication"
 
             if (
                 "required Graph scopes granted" in line
@@ -187,6 +905,12 @@ def run_assessment(job_id: str, tenant_domain: str):
                 or "User Summary" in line
             ):
                 job["status"] = "running"
+                if job.get("phase") in (
+                    None,
+                    "starting",
+                    "authentication",
+                ):
+                    job["phase"] = "collecting"
 
         return_code = process.wait()
         job["return_code"] = return_code
@@ -208,7 +932,17 @@ def run_assessment(job_id: str, tenant_domain: str):
             job["completed_at"] = utc_now()
             return
 
+        job["phase"] = "building"
+
+        sections_run = get_sections_run(output_folder)
+
+        enhance_nist_report(
+            Path(artifacts["report"]),
+            sections_run=sections_run,
+        )
+
         job["artifacts"] = artifacts
+        job["phase"] = "completed"
         job["status"] = "completed"
         job["completed_at"] = utc_now()
 
@@ -309,6 +1043,7 @@ def create_assessment(request: AssessmentRequest):
         "id": job_id,
         "tenant_domain": tenant_domain,
         "status": "queued",
+        "phase": "queued",
         "created_at": utc_now(),
         "started_at": None,
         "completed_at": None,
@@ -367,6 +1102,7 @@ def assessment_status(job_id: str):
         "assessment_id": job["id"],
         "tenant_domain": job["tenant_domain"],
         "status": job["status"],
+        "phase": job.get("phase"),
         "created_at": job["created_at"],
         "started_at": job["started_at"],
         "completed_at": job["completed_at"],
