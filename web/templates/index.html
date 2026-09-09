@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M365 NIST Identity Assessment</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body>
+
+<header class="site-header">
+    <div class="container nav">
+        <div class="brand">
+            <div class="brand-mark">S</div>
+
+            <div class="brand-text">
+                <strong>SYSTEMS</strong>
+                <span>Automation Team / IAM Ops</span>
+            </div>
+        </div>
+
+        <div class="framework-label">
+            NIST Identity Assessment
+        </div>
+    </div>
+</header>
+
+
+<main>
+
+<section class="hero">
+
+    <div class="hero-glow hero-glow-one"></div>
+    <div class="hero-glow hero-glow-two"></div>
+
+    <div class="container hero-content">
+
+        <div class="eyebrow">
+            MICROSOFT 365 · IDENTITY SECURITY
+        </div>
+
+        <h1>
+            Measure your Microsoft 365
+            <span>identity posture against NIST.</span>
+        </h1>
+
+        <p class="hero-copy">
+            Run an automated Entra ID identity assessment and map
+            technical findings against NIST SP 800-53 Rev. 5 and
+            NIST Cybersecurity Framework 2.0.
+        </p>
+
+        <div class="framework-pills">
+            <span>NIST SP 800-53 Rev. 5</span>
+            <span>NIST CSF 2.0</span>
+            <span>Microsoft Entra ID</span>
+        </div>
+
+        <div class="hero-actions">
+            <button id="openAssessment" class="primary-button">
+                Test Yourself
+                <span>→</span>
+            </button>
+
+            <div class="safe-note">
+                <span class="safe-dot"></span>
+                Read-only assessment · Microsoft authentication
+            </div>
+        </div>
+
+    </div>
+
+</section>
+
+
+<section class="workflow">
+    <div class="container">
+
+        <div class="section-heading">
+            <span>HOW IT WORKS</span>
+            <h2>From tenant authentication to NIST evidence.</h2>
+        </div>
+
+        <div class="workflow-grid">
+
+            <div class="workflow-card">
+                <div class="step-number">01</div>
+                <h3>Connect</h3>
+                <p>
+                    Provide your Microsoft 365 tenant domain and
+                    authenticate through Microsoft's official sign-in.
+                </p>
+            </div>
+
+            <div class="workflow-card">
+                <div class="step-number">02</div>
+                <h3>Assess</h3>
+                <p>
+                    Identity configuration and Conditional Access
+                    controls are evaluated through the assessment engine.
+                </p>
+            </div>
+
+            <div class="workflow-card">
+                <div class="step-number">03</div>
+                <h3>Map</h3>
+                <p>
+                    Technical findings are mapped to NIST SP 800-53
+                    Rev. 5 and NIST CSF 2.0.
+                </p>
+            </div>
+
+            <div class="workflow-card">
+                <div class="step-number">04</div>
+                <h3>Report</h3>
+                <p>
+                    Review the HTML posture report and download
+                    supporting Excel and CSV evidence.
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+</main>
+
+
+<footer>
+    <div class="container footer-content">
+        <span>Systems Automation Team / IAM Ops</span>
+
+        <span>
+            Powered by M365-Assess ·
+            NIST SP 800-53 Rev. 5 ·
+            NIST CSF 2.0
+        </span>
+    </div>
+</footer>
+
+
+<div id="assessmentModal" class="modal hidden">
+
+    <div class="modal-overlay" id="modalOverlay"></div>
+
+    <div class="modal-card">
+
+        <button id="closeModal" class="close-button">×</button>
+
+
+        <div id="tenantStep" class="modal-step">
+
+            <div class="modal-icon">01</div>
+
+            <div class="modal-label">
+                START ASSESSMENT
+            </div>
+
+            <h2>Test your identity posture.</h2>
+
+            <p>
+                Enter the primary Microsoft 365 tenant domain
+                you want to assess.
+            </p>
+
+            <form id="tenantForm">
+
+                <label for="tenantDomain">
+                    Tenant domain
+                </label>
+
+                <input
+                    id="tenantDomain"
+                    name="tenantDomain"
+                    type="text"
+                    placeholder="company.onmicrosoft.com"
+                    autocomplete="off"
+                    required
+                >
+
+                <div id="tenantError" class="error-message"></div>
+
+                <button class="primary-button full-width" type="submit">
+                    Start Assessment
+                    <span>→</span>
+                </button>
+
+            </form>
+
+            <div class="security-note">
+                Your Microsoft password is never entered into this application.
+            </div>
+
+        </div>
+
+
+        <div id="startingStep" class="modal-step hidden">
+
+            <div class="loader"></div>
+
+            <div class="modal-label">
+                PREPARING ASSESSMENT
+            </div>
+
+            <h2>Starting the assessment engine.</h2>
+
+            <p>
+                Preparing Microsoft Graph authentication and
+                the Identity assessment session.
+            </p>
+
+        </div>
+
+
+        <div id="authStep" class="modal-step hidden">
+
+            <div class="modal-icon microsoft-icon">M</div>
+
+            <div class="modal-label">
+                MICROSOFT AUTHENTICATION
+            </div>
+
+            <h2>Connect your Microsoft tenant.</h2>
+
+            <p>
+                Microsoft has generated a temporary device code.
+                Continue to Microsoft's official authentication page.
+            </p>
+
+            <div class="device-code-box">
+
+                <span>Device code</span>
+
+                <strong id="deviceCode">
+                    ---------
+                </strong>
+
+                <button id="copyCode" class="copy-button">
+                    Copy code
+                </button>
+
+            </div>
+
+            <button id="microsoftLogin" class="microsoft-button">
+                Continue with Microsoft
+                <span>↗</span>
+            </button>
+
+            <div class="waiting-line">
+                <span class="pulse"></span>
+                Waiting for Microsoft authentication...
+            </div>
+
+        </div>
+
+
+        <div id="runningStep" class="modal-step hidden">
+
+            <div class="loader"></div>
+
+            <div class="modal-label">
+                ASSESSMENT RUNNING
+            </div>
+
+            <h2>Evaluating identity posture.</h2>
+
+            <p id="runningTenant"></p>
+
+            <div class="progress-list">
+
+                <div class="progress-item active">
+                    <span></span>
+                    Microsoft Graph connected
+                </div>
+
+                <div class="progress-item active">
+                    <span></span>
+                    Collecting Entra ID evidence
+                </div>
+
+                <div class="progress-item">
+                    <span></span>
+                    Evaluating identity controls
+                </div>
+
+                <div class="progress-item">
+                    <span></span>
+                    Mapping NIST frameworks
+                </div>
+
+                <div class="progress-item">
+                    <span></span>
+                    Building assessment package
+                </div>
+
+            </div>
+
+            <div class="assessment-note">
+                The assessment can take a few minutes depending
+                on tenant size and available Microsoft Graph data.
+            </div>
+
+        </div>
+
+
+        <div id="completeStep" class="modal-step hidden">
+
+            <div class="success-icon">✓</div>
+
+            <div class="modal-label success-label">
+                ASSESSMENT COMPLETE
+            </div>
+
+            <h2>Your NIST package is ready.</h2>
+
+            <p id="completedTenant"></p>
+
+            <div class="result-actions">
+
+                <a
+                    id="reportLink"
+                    href="#"
+                    target="_blank"
+                    class="primary-button result-button"
+                >
+                    Open NIST Report
+                    <span>↗</span>
+                </a>
+
+                <a
+                    id="excelLink"
+                    href="#"
+                    class="secondary-button result-button"
+                >
+                    Download Excel Matrix
+                </a>
+
+                <a
+                    id="spLink"
+                    href="#"
+                    class="secondary-button result-button"
+                >
+                    SP 800-53 CSV
+                </a>
+
+                <a
+                    id="csfLink"
+                    href="#"
+                    class="secondary-button result-button"
+                >
+                    CSF 2.0 CSV
+                </a>
+
+            </div>
+
+
+            <div class="technical-output">
+
+                <div>
+                    <span>Web report</span>
+                    <code id="reportUrl"></code>
+                </div>
+
+                <div>
+                    <span>Output folder</span>
+                    <code id="outputFolder"></code>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div id="failedStep" class="modal-step hidden">
+
+            <div class="failure-icon">!</div>
+
+            <div class="modal-label failure-label">
+                ASSESSMENT FAILED
+            </div>
+
+            <h2>Something stopped the assessment.</h2>
+
+            <p id="failureMessage">
+                Review the assessment engine output and try again.
+            </p>
+
+            <button
+                id="tryAgain"
+                class="primary-button full-width"
+            >
+                Try Again
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="/static/app.js"></script>
+
+</body>
+</html>
